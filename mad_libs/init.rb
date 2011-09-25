@@ -13,5 +13,5 @@ APP_ROOT = File.dirname(__FILE__)
 $:.unshift( File.join(APP_ROOT, 'lib') )
 require 'mad_lib'
 
-app = MadLib.new
+app = MadLib.new 'Gift_Giving.madlib'
 app.launch!
