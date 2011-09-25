@@ -2,17 +2,27 @@ class MadLib
 
 	def initialize filename
 		@filepath = File.join(APP_ROOT, 'patterns', filename)
-		@placeholder_map = {}
-		@text = ""
+		@file_content = ""
+		@compiled_content = ""
+		@placeholder_mapping = {}
+		@variable_mapping = {}
 	end
 
 	def launch!
 		print welcome_message
-		unless !File.exists? @filepath	
-			fetch_text
 
-			map_placeholder			
-		end
+		process! unless !File.exists? @filepath	
+		
+	end
+
+	def process!
+		copy_file_content
+
+		compile variables
+
+		compile placeholders
+
+		puts @compiled_content
 	end
 
 	private
@@ -20,27 +30,49 @@ class MadLib
 		"\n*************** Welcome to Mad Lib ***************\n\n"
 	end
 
-	def fetch_text
+	def copy_file_content
 		File.open(@filepath, "r") do |file|
 			while (line = file.gets)
-				@text += line			
+				@file_content += line.gsub("\n"," ")
 	  		end
 		end
 	end
 
+	def variables
+ 		@file_content.scan(variable_pattern).flatten  
+	end
+
 	def placeholders
- 		@text.scan(placeholder_pattern).flatten   				
+ 		@file_content.scan(placeholder_pattern).flatten   				
 	end
 
 	def placeholder_pattern
 		/\(\(([^(\)\))]+)\)\)/
 	end
 
-	def map_placeholder
-		placeholders.each do |placeholder|
-			print "Give me #{placeholder}: "
-			@placeholder_map[placeholder] = gets.chomp.strip
+	def variable_pattern
+		/\(\(([a-zA-Z]+):/
+	end
+
+	def get_values_for values
+		map = {}
+		values.each do |value|
+			while map[value].nil? || map[value].empty?
+				print "Give me #{value.gsub(/[a-zA-Z]+:/,'')}: "
+				map[value] = gets.chomp.strip
+			end
 		end
-		# @placeholder_map = "{\"a verb, past tense\"=>\"sad\", \"a number\"=>\"2\", \"a plural noun\"=>\"dsf\", \"a noun\"=>\"asd\", \"a verb ending in ing\"=>\"sad\", \"an adjective\"=>\"dfds\", \"an adverb\"=>\"ad\", \"a body part\"=>\"sgd\"}"
+		map
+	end
+
+	def compile data
+		@compiled_content = @file_content
+		compile_with(get_values_for data)
+	end
+
+	def compile_with mapping
+		mapping.each do |k, v|
+			@compiled_content.gsub!("((#{k}))", v)
+		end
 	end
 end
