@@ -2,16 +2,13 @@ class MadLib
 
 	def initialize filename
 		@filepath = File.join(APP_ROOT, 'patterns', filename)
-		@file_content = ""
 		@compiled_content = ""
-		@placeholder_mapping = {}
-		@variable_mapping = {}
 	end
 
 	def launch!
 		print welcome_message
 
-		process! unless !File.exists? @filepath	
+		process! if File.exists? @filepath	
 		
 	end
 
@@ -30,20 +27,22 @@ class MadLib
 		"\n*************** Welcome to Mad Lib ***************\n\n"
 	end
 
-	def copy_file_content
-		File.open(@filepath, "r") do |file|
-			while (line = file.gets)
-				@file_content += line.gsub("\n"," ")
-	  		end
+	def file_content
+		@_file_content ||=  "".tap do |content|
+			File.open(@filepath, "r") do |file|
+				while (line = file.gets)
+					content += line.gsub("\n"," ")
+		  		end
+			end
 		end
 	end
 
 	def variables
- 		@file_content.scan(variable_pattern).flatten  
+ 		file_content.scan(variable_pattern).flatten  
 	end
 
 	def placeholders
- 		@file_content.scan(placeholder_pattern).flatten   				
+ 		file_content.scan(placeholder_pattern).flatten   				
 	end
 
 	def placeholder_pattern
@@ -65,12 +64,12 @@ class MadLib
 		map
 	end
 
-	def compile data
-		@compiled_content = @file_content
-		compile_with(get_values_for data)
+	def compile(data)
+		@compiled_content = file_content
+		compile_with(get_values_for(data))
 	end
 
-	def compile_with mapping
+	def compile_with(mapping)
 		mapping.each do |k, v|
 			@compiled_content.gsub!("((#{k}))", v)
 		end
